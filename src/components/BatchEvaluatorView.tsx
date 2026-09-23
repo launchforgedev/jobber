@@ -5,6 +5,7 @@ import { generateFullPrepKit } from '../services/aiGenerator.ts';
 
 interface BatchEvaluatorViewProps {
   onLoadKitToWorkspace: (kit: PrepKit) => void;
+  initialCases?: BatchInputCase[];
 }
 
 const DEFAULT_CASES: BatchInputCase[] = [
@@ -28,8 +29,10 @@ const DEFAULT_CASES: BatchInputCase[] = [
   }
 ];
 
-export const BatchEvaluatorView: React.FC<BatchEvaluatorViewProps> = ({ onLoadKitToWorkspace }) => {
-  const [casesJson, setCasesJson] = useState(JSON.stringify(DEFAULT_CASES, null, 2));
+export const BatchEvaluatorView: React.FC<BatchEvaluatorViewProps> = ({ onLoadKitToWorkspace, initialCases }) => {
+  const [casesJson, setCasesJson] = useState(() => 
+    JSON.stringify(initialCases && initialCases.length > 0 ? initialCases : DEFAULT_CASES, null, 2)
+  );
   const [isRunning, setIsRunning] = useState(false);
   const [currentRunningIndex, setCurrentRunningIndex] = useState<number | null>(null);
   const [results, setResults] = useState<BatchOutput | null>(null);

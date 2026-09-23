@@ -1,468 +1,546 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis
+  CartesianGrid
 } from 'recharts';
 import {
   ArrowRight,
-  TrendingUp,
-  Award,
-  Target,
-  FileCheck,
+  ShieldCheck,
   Building2,
   Calendar,
   Sparkles,
-  Search,
-  SlidersHorizontal,
+  Upload,
+  BookOpen,
+  HelpCircle,
+  Trash2,
   ExternalLink,
-  ShieldCheck,
-  CheckCircle2
+  Layers,
+  Clock,
+  LogOut,
+  FolderOpen
 } from 'lucide-react';
-import { UserSession } from '../types/prepkit.ts';
-import { RECENT_PIPELINE_APPLICATIONS, SKILL_DISTRIBUTION_RADAR } from '../services/matcherEngine.ts';
+import { UserSession, PrepKit, BatchInputCase } from '../types/prepkit.ts';
+import { getUserKits, deleteUserKit, getActiveSession } from '../services/authStorage.ts';
 
 interface DashboardAnalyticsProps {
   session: UserSession;
-  onNavigateToMatcher: () => void;
-  onNavigateToGenerator: () => void;
-  onSelectRoleForMatcher?: (role: string, company: string, jd: string) => void;
+  onOpenKit: (kit: PrepKit) => void;
+  onNavigateToGenerator: (initialJd?: string, initialCompanyUrl?: string) => void;
+  onNavigateToBatch: (loadedCases?: BatchInputCase[]) => void;
+  onLogout: () => void;
+  onSessionExpired: () => void;
 }
 
 export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({
   session,
-  onNavigateToMatcher,
-  onNavigateToGenerator
+  onOpenKit,
+  onNavigateToGenerator,
+  onNavigateToBatch,
+  onLogout,
+  onSessionExpired
 }) => {
-  const [filterCategory, setFilterCategory] = useState<'All' | 'Backend' | 'Frontend' | 'Infrastructure'>('All');
-  const [activeMetricTab, setActiveMetricTab] = useState<'trends' | 'radar'>('trends');
+  const [userKits, setUserKits] = useState<Array<{ id: string; kit: PrepKit; savedAt: string }>>([]);
+  const [batchUploadError, setBatchUploadError] = useState<string | null>(null);
 
-  const filteredApplications = filterCategory === 'All'
-    ? RECENT_PIPELINE_APPLICATIONS
-    : RECENT_PIPELINE_APPLICATIONS.filter(a => a.category === filterCategory);
+  // Validate session and load user's isolated kits
+  const refreshUserKits = () => {
+    const currentSession = getActiveSession();
+    if (!currentSession || currentSession.userId !== session.userId) {
+      onSessionExpired();
+      return;
+    }
+    const kits = getUserKits(session.userId);
+    setUserKits(kits);
+  };
 
-  // Compute live averages
-  const avgScore = Math.round(
-    RECENT_PIPELINE_APPLICATIONS.reduce((acc, c) => acc + c.score, 0) / RECENT_PIPELINE_APPLICATIONS.length
-  );
-  const avgCoverage = Math.round(
-    RECENT_PIPELINE_APPLICATIONS.reduce((acc, c) => acc + c.coverage, 0) / RECENT_PIPELINE_APPLICATIONS.length
-  );
+  useEffect(() => {
+    refreshUserKits();
+  }, [session.userId]);
+
+  const handleDeleteKit = (kitId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this prep kit? This cannot be undone.')) {
+      deleteUserKit(session.userId, kitId);
+      refreshUserKits();
+    }
+  };
+
+  // Handle batch file upload (description-and-company pairs)
+  const handleBatchFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBatchUploadError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text);
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          setBatchUploadError('File must contain a non-empty JSON array of role cases.');
+          return;
+        }
+
+        // Validate structure
+        const validatedCases: BatchInputCase[] = parsed.map((item, idx) => {
+          if (!item.jd || typeof item.jd !== 'string') {
+            throw new Error(`Item #${idx + 1} is missing a required "jd" string property.`);
+          }
+          if (!item.company_url || typeof item.company_url !== 'string') {
+            throw new Error(`Item #${idx + 1} is missing a required "company_url" string property.`);
+          }
+          const days = typeof item.days === 'number' && Number.isInteger(item.days) && item.days > 0 ? item.days : 5;
+          return {
+            id: item.id || `case-${String(idx + 1).padStart(2, '0')}`,
+            jd: item.jd,
+            company_url: item.company_url,
+            days
+          };
+        });
+
+        // Navigate to batch evaluator with loaded cases
+        onNavigateToBatch(validatedCases);
+      } catch (err: any) {
+        setBatchUploadError(err.message || 'Invalid JSON format. Expected: [{ "jd": "...", "company_url": "...", "days": 5 }]');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Compute REAL metrics from the user's actual kits (NO fake dummy numbers)
+  const totalKitsCount = userKits.length;
+  let totalQuestionsCount = 0;
+  let totalFlashcardsCount = 0;
+  let totalMustHavesCount = 0;
+  let totalUncoveredMustHaves = 0;
+
+  const categoryCounts: Record<string, number> = {
+    technical: 0,
+    'system-design': 0,
+    behavioural: 0,
+    'company-fit': 0
+  };
+
+  const difficultyCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+
+  userKits.forEach(({ kit }) => {
+    if (kit?.questions) {
+      totalQuestionsCount += kit.questions.length;
+      kit.questions.forEach(q => {
+        if (categoryCounts[q.category] !== undefined) {
+          categoryCounts[q.category]++;
+        }
+        if (q.difficulty && difficultyCounts[q.difficulty] !== undefined) {
+          difficultyCounts[q.difficulty]++;
+        }
+      });
+    }
+
+    if (kit?.flashcards) {
+      totalFlashcardsCount += kit.flashcards.length;
+    }
+
+    if (kit?.role?.requirements) {
+      const mustHaves = kit.role.requirements.filter(r => r.priority === 'must');
+      totalMustHavesCount += mustHaves.length;
+    }
+
+    if (kit?.coverage?.uncovered_requirement_ids) {
+      totalUncoveredMustHaves += kit.coverage.uncovered_requirement_ids.length;
+    }
+  });
+
+  const overallCoverageRate = totalMustHavesCount > 0
+    ? Math.round(((totalMustHavesCount - totalUncoveredMustHaves) / totalMustHavesCount) * 100)
+    : 100;
+
+  // Real data for charts (calculated strictly from user's kits)
+  const realCategoryChartData = [
+    { name: 'Technical', count: categoryCounts['technical'], fill: '#2563EB' },
+    { name: 'System Design', count: categoryCounts['system-design'], fill: '#4F46E5' },
+    { name: 'Behavioural', count: categoryCounts['behavioural'], fill: '#059669' },
+    { name: 'Company Fit', count: categoryCounts['company-fit'], fill: '#D97706' }
+  ];
+
+  const realDifficultyChartData = [
+    { level: 'Level 1 (Foundational)', count: difficultyCounts[1], fill: '#10B981' },
+    { level: 'Level 2 (Applied / Senior)', count: difficultyCounts[2], fill: '#3B82F6' },
+    { level: 'Level 3 (Hard / Architecture)', count: difficultyCounts[3], fill: '#8B5CF6' }
+  ];
 
   return (
     <div className="space-y-8 animate-fade-in font-sans">
-      {/* Top Welcome & Quick-Action Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-zinc-400">
+      {/* Session Security & User Header Bar */}
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>Jobber Workspace · Signed in as {session.email}</span>
+              <span className="text-xs font-mono font-medium text-slate-500 dark:text-zinc-400">
+                Active Authenticated Session
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
+                User ID: {session.userId}
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-zinc-100">
-              Candidate Readiness & Match Analytics
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
+              {session.email}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
-              Real-time telemetry measuring technical requirement coverage, keyword ATS optimization, and interview question preparedness against high-growth engineering teams.
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
+              Only your generated kits are visible in this workspace. Session isolated in secure storage.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={onNavigateToMatcher}
-              className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-colors"
+              onClick={() => onNavigateToGenerator()}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-colors"
             >
-              <span>Analyze Resume vs JD</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Create New Prep Kit</span>
             </button>
 
             <button
-              onClick={onNavigateToGenerator}
-              className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-2xs"
+              onClick={onLogout}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-2xs"
             >
-              <Sparkles className="h-3.5 w-3.5 text-blue-500" />
-              <span>Create Full Prep Kit</span>
+              <LogOut className="h-3.5 w-3.5 text-slate-400" />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
+
+        {/* Real Session Metadata telemetry */}
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center gap-4 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Token: {session.token.slice(0, 14)}••••
+          </span>
+          <span>·</span>
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-slate-400" /> Session Expiration: 24 Hours from login
+          </span>
+          <span>·</span>
+          <span>Isolation Scope: <code className="text-slate-700 dark:text-zinc-300 font-semibold">{`jobber_kits_${session.userId}`}</code></span>
+        </div>
       </div>
 
-      {/* KPI Cards adhering to SaaS standards (Linear / Vercel style) */}
+      {/* Batch Preparation Shortcut (Multiple roles at once) */}
+      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/70 dark:bg-zinc-900/40 p-5 sm:p-6 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Upload className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                Prepare for Multiple Roles at Once
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
+              Upload a JSON file of description-and-company pairs to run pipeline research across multiple positions simultaneously.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-4 py-2 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-2xs transition-colors">
+              <Upload className="h-3.5 w-3.5 text-blue-500" />
+              <span>Select Pairs JSON File</span>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleBatchFileUpload}
+                className="hidden"
+              />
+            </label>
+
+            <button
+              onClick={() => onNavigateToBatch()}
+              className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              <span>Batch CLI View</span>
+              <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+
+        {batchUploadError && (
+          <div className="mt-3 p-3 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 text-xs text-red-700 dark:text-red-300">
+            {batchUploadError}
+          </div>
+        )}
+      </div>
+
+      {/* REAL METRICS SUMMARY (NO FAKE / DUMMY DATA) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 mb-1">
-            <span>Average Match Score</span>
-            <Award className="h-4 w-4 text-emerald-500" />
+            <span>Your Active Kits</span>
+            <Building2 className="h-4 w-4 text-blue-500" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 tabular-nums">
-            {avgScore}%
+            {totalKitsCount}
           </div>
-          <div className="mt-2 flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-            <TrendingUp className="h-3 w-3" />
-            <span>+4.2% from previous week</span>
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
+            Scoped to this user account
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 mb-1">
+            <span>Generated Questions</span>
+            <HelpCircle className="h-4 w-4 text-indigo-500" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 tabular-nums">
+            {totalQuestionsCount}
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
+            Across {totalKitsCount} active kits
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 mb-1">
+            <span>Flashcards Ready</span>
+            <BookOpen className="h-4 w-4 text-amber-500" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 tabular-nums">
+            {totalFlashcardsCount}
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
+            Spaced repetition enabled
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 mb-1">
             <span>Must-Have Coverage</span>
-            <Target className="h-4 w-4 text-blue-500" />
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 tabular-nums">
-            {avgCoverage}%
+            {overallCoverageRate}%
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
-            Zero critical gaps in 5 of 6 roles
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 mb-1">
-            <span>Pipeline Applications</span>
-            <Building2 className="h-4 w-4 text-purple-500" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 tabular-nums">
-            6
-          </div>
-          <div className="mt-2 text-[11px] text-purple-600 dark:text-purple-400">
-            2 interviews scheduled this week
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 mb-1">
-            <span>Prep Readiness Index</span>
-            <FileCheck className="h-4 w-4 text-amber-500" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 tabular-nums">
-            91 / 100
-          </div>
-          <div className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
-            Deterministic calendar active
+            {totalUncoveredMustHaves === 0 ? 'Zero must-have gaps' : `${totalUncoveredMustHaves} gaps pending second pass`}
           </div>
         </div>
       </div>
 
-      {/* Visual Analytics Graphs Section (Recharts) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Match Progression & Velocity (Col-span 2) */}
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <div>
-                <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-zinc-100">
-                  Target Role Compatibility & Coverage Velocity
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  Comparative analysis of match score vs must-have requirement coverage across recent applications
-                </p>
-              </div>
-
-              {/* Toggle metric tabs */}
-              <div className="inline-flex rounded-lg border border-slate-200 dark:border-zinc-800 p-0.5 bg-slate-50 dark:bg-zinc-950 text-xs">
-                <button
-                  onClick={() => setActiveMetricTab('trends')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeMetricTab === 'trends'
-                      ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white font-medium shadow-2xs'
-                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-                  }`}
-                >
-                  Trend Area
-                </button>
-                <button
-                  onClick={() => setActiveMetricTab('radar')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeMetricTab === 'radar'
-                      ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white font-medium shadow-2xs'
-                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-                  }`}
-                >
-                  Company Bars
-                </button>
-              </div>
-            </div>
-
-            {/* Recharts Area / Bar Chart */}
-            <div className="h-72 w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                {activeMetricTab === 'trends' ? (
-                  <AreaChart
-                    data={RECENT_PIPELINE_APPLICATIONS}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0.0} />
-                      </linearGradient>
-                      <linearGradient id="coverageGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-200 dark:text-zinc-800/80" />
-                    <XAxis
-                      dataKey="company"
-                      tick={{ fontSize: 11, fill: 'currentColor' }}
-                      className="text-slate-500 dark:text-zinc-400"
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      domain={[60, 100]}
-                      tick={{ fontSize: 11, fill: 'currentColor' }}
-                      className="text-slate-500 dark:text-zinc-400"
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#18181b',
-                        borderColor: '#27272a',
-                        borderRadius: '0.75rem',
-                        fontSize: '12px',
-                        color: '#f4f4f5'
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="score"
-                      name="Match Score (%)"
-                      stroke="#2563EB"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#scoreGradient)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="coverage"
-                      name="Must-Have Coverage (%)"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#coverageGradient)"
-                    />
-                  </AreaChart>
-                ) : (
-                  <BarChart
-                    data={RECENT_PIPELINE_APPLICATIONS}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-200 dark:text-zinc-800/80" />
-                    <XAxis
-                      dataKey="company"
-                      tick={{ fontSize: 11, fill: 'currentColor' }}
-                      className="text-slate-500 dark:text-zinc-400"
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      domain={[0, 100]}
-                      tick={{ fontSize: 11, fill: 'currentColor' }}
-                      className="text-slate-500 dark:text-zinc-400"
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#18181b',
-                        borderColor: '#27272a',
-                        borderRadius: '0.75rem',
-                        fontSize: '12px',
-                        color: '#f4f4f5'
-                      }}
-                    />
-                    <Bar dataKey="score" name="Match Score" fill="#2563EB" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="coverage" name="Coverage %" fill="#10B981" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                )}
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 font-mono">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-blue-600" /> Match Score
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" /> Must-Have Coverage
-              </span>
-            </div>
-            <span>Threshold for Interview: 80%</span>
-          </div>
-        </div>
-
-        {/* Right Column: Skill Competency Radar (Col-span 1) */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-zinc-100">
-              Competency Radar Distribution
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">
-              Candidate profile vs high-bar engineering requirements
+      {/* REAL CHARTS SECTION: Shown when user has real kits */}
+      {totalKitsCount > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Question Category Distribution Chart */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">
+              Your Question Bank Category Breakdown
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">
+              Real aggregated count of questions in your saved kits by evaluation category
             </p>
 
-            <div className="h-72 w-full pt-1">
+            <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart outerRadius={90} data={SKILL_DISTRIBUTION_RADAR}>
-                  <PolarGrid stroke="currentColor" className="text-slate-200 dark:text-zinc-800" />
-                  <PolarAngleAxis
-                    dataKey="subject"
-                    tick={{ fontSize: 9, fill: 'currentColor' }}
-                    className="text-slate-500 dark:text-zinc-400"
-                  />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar
-                    name="Candidate"
-                    dataKey="candidateScore"
-                    stroke="#2563EB"
-                    fill="#2563EB"
-                    fillOpacity={0.3}
-                  />
-                  <Radar
-                    name="Role Benchmark"
-                    dataKey="jobTargetScore"
-                    stroke="#94A3B8"
-                    fill="#94A3B8"
-                    fillOpacity={0.15}
-                  />
+                <BarChart data={realCategoryChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-zinc-800/80" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'currentColor' }} className="text-slate-500 dark:text-zinc-400" axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: 'currentColor' }} className="text-slate-500 dark:text-zinc-400" axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#18181b',
                       borderColor: '#27272a',
                       borderRadius: '0.75rem',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       color: '#f4f4f5'
                     }}
                   />
-                </RadarChart>
+                  <Bar dataKey="count" name="Questions Count" radius={[6, 6, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 font-mono">
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+8% over benchmark in Systems</span>
-            <span>Target: Stripe</span>
+          {/* Question Difficulty Distribution Chart */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">
+              Question Difficulty Distribution
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">
+              Categorized by integer difficulty (1: foundational, 2: applied, 3: architectural)
+            </p>
+
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={realDifficultyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-zinc-800/80" />
+                  <XAxis dataKey="level" tick={{ fontSize: 10, fill: 'currentColor' }} className="text-slate-500 dark:text-zinc-400" axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: 'currentColor' }} className="text-slate-500 dark:text-zinc-400" axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#18181b',
+                      borderColor: '#27272a',
+                      borderRadius: '0.75rem',
+                      fontSize: '12px',
+                      color: '#f4f4f5'
+                    }}
+                  />
+                  <Bar dataKey="count" name="Questions Count" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
-      {/* Recent Applications Pipeline Table */}
+      {/* SAVED PREP KITS TABLE (Real User Data Only) */}
       <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs">
-        <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-zinc-100">
-              Active Candidate Application Pipeline
+              Your Prepared Interview Kits ({totalKitsCount})
             </h2>
             <p className="text-xs text-slate-500 dark:text-zinc-400">
-              Historical match evaluations, requirement coverage, and current interview status
+              Registered exclusively under {session.email}
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs">
-            {(['All', 'Backend', 'Frontend', 'Infrastructure'] as const).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`px-2.5 py-1 rounded-lg transition-colors ${
-                  filterCategory === cat
-                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-medium'
-                    : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          {totalKitsCount > 0 && (
+            <button
+              onClick={() => onNavigateToGenerator()}
+              className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium"
+            >
+              <span>+ Add Another Role</span>
+            </button>
+          )}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-950/40 text-slate-500 dark:text-zinc-400 font-mono uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4 sm:px-6">Role & Company</th>
-                <th className="py-3 px-4">Domain</th>
-                <th className="py-3 px-4">Compatibility Score</th>
-                <th className="py-3 px-4">Coverage</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60 text-slate-700 dark:text-zinc-300">
-              {filteredApplications.map((app, idx) => (
-                <tr
-                  key={idx}
-                  className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
-                >
-                  <td className="py-3.5 px-4 sm:px-6">
-                    <div className="font-medium text-slate-900 dark:text-zinc-100">{app.role}</div>
-                    <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">{app.company}</div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-mono">
-                      {app.category}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-mono font-bold tabular-nums ${
-                        app.score >= 90 ? 'text-emerald-600 dark:text-emerald-400' :
-                        app.score >= 80 ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'
-                      }`}>
-                        {app.score}%
-                      </span>
-                      <div className="w-16 bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className={`h-1.5 rounded-full ${
-                            app.score >= 90 ? 'bg-emerald-500' :
-                            app.score >= 80 ? 'bg-blue-600' : 'bg-amber-500'
-                          }`}
-                          style={{ width: `${app.score}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-zinc-400">
-                    {app.coverage}% must-have
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ${
-                      app.status === 'Offer Extended' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40' :
-                      app.status === 'Interview Scheduled' ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40' :
-                      app.status === 'Screening Passed' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40' :
-                      'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300'
-                    }`}>
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      onClick={onNavigateToMatcher}
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                    >
-                      <span>Re-evaluate</span>
-                      <ArrowRight className="h-3 w-3" />
-                    </button>
-                  </td>
+        {totalKitsCount === 0 ? (
+          <div className="p-12 text-center space-y-4">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800 text-slate-400">
+              <FolderOpen className="h-6 w-6" />
+            </div>
+            <div className="max-w-md mx-auto space-y-1">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                No prep kits generated yet
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                Paste a target job description and company website to crawl their hiring practices, synthesize role requirements, and build your study schedule.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3 pt-2">
+              <button
+                onClick={() => onNavigateToGenerator()}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-colors"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Create Your First Prep Kit</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-950/40 text-slate-500 dark:text-zinc-400 font-mono uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4 sm:px-6">Role & Company</th>
+                  <th className="py-3 px-4">Timeline</th>
+                  <th className="py-3 px-4">Coverage Status</th>
+                  <th className="py-3 px-4">Content Assets</th>
+                  <th className="py-3 px-4">Last Saved</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60 text-slate-700 dark:text-zinc-300">
+                {userKits.map(({ id, kit, savedAt }) => {
+                  const uncoveredCount = kit.coverage?.uncovered_requirement_ids?.length || 0;
+                  const passes = kit.coverage?.passes || 1;
+
+                  return (
+                    <tr
+                      key={id}
+                      onClick={() => onOpenKit(kit)}
+                      className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer group"
+                    >
+                      <td className="py-3.5 px-4 sm:px-6">
+                        <div className="font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {kit.role.title}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
+                          <span>{kit.source.company || 'Target Company'}</span>
+                          <span>·</span>
+                          <a
+                            href={kit.source.company_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-blue-600 hover:underline flex items-center gap-0.5"
+                          >
+                            <span>{kit.source.company_url}</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono">
+                        <span className="inline-flex items-center gap-1 text-slate-700 dark:text-zinc-300">
+                          <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                          <span>{kit.schedule.days_available} Days</span>
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        {uncoveredCount === 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                            <span>100% Must-Haves Covered ({passes} Pass{passes > 1 ? 'es' : ''})</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                            <span>{uncoveredCount} Gaps</span>
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500 dark:text-zinc-400">
+                        <span className="text-slate-800 dark:text-zinc-200 font-medium">{kit.questions.length}</span> questions · <span className="text-slate-800 dark:text-zinc-200 font-medium">{kit.flashcards.length}</span> cards
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                        {new Date(savedAt).toLocaleDateString()}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenKit(kit);
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium"
+                          >
+                            <span>Open</span>
+                            <ArrowRight className="h-3 w-3" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteKit(id, e)}
+                            title="Delete Kit"
+                            className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

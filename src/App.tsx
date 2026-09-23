@@ -12,7 +12,7 @@ import { PracticeFlashcards } from './components/PracticeFlashcards.tsx';
 import { MockInterviewStudio } from './components/MockInterviewStudio.tsx';
 import { BatchEvaluatorView } from './components/BatchEvaluatorView.tsx';
 import { PrintableOnePager } from './components/PrintableOnePager.tsx';
-import { PrepKit, UserSession } from './types/prepkit.ts';
+import { PrepKit, UserSession, BatchInputCase } from './types/prepkit.ts';
 import { getActiveSession, logoutUser, getUserKits, saveUserKit } from './services/authStorage.ts';
 import { useThemeState } from './services/theme.ts';
 import { Printer, HelpCircle, Calendar, BookOpen, Award, ArrowRight } from 'lucide-react';
@@ -27,6 +27,7 @@ export default function App() {
   const [showPrintView, setShowPrintView] = useState(false);
   const [preseededJd, setPreseededJd] = useState<string | undefined>(undefined);
   const [preseededCompanyUrl, setPreseededCompanyUrl] = useState<string | undefined>(undefined);
+  const [batchCases, setBatchCases] = useState<BatchInputCase[] | undefined>(undefined);
   const { theme, toggleTheme } = useThemeState();
 
   // Initialize session and restore user kits
@@ -124,10 +125,26 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <DashboardAnalytics
             session={session}
-            onNavigateToMatcher={() => setActiveTab('matcher')}
-            onNavigateToGenerator={() => {
+            onOpenKit={(kit) => {
+              setActiveKit(kit);
+              setActiveTab('overview');
+            }}
+            onNavigateToGenerator={(initialJd, initialCompanyUrl) => {
+              setPreseededJd(initialJd);
+              setPreseededCompanyUrl(initialCompanyUrl);
               setIsCreatingNew(true);
               setActiveTab('overview');
+            }}
+            onNavigateToBatch={(loadedCases) => {
+              if (loadedCases) {
+                setBatchCases(loadedCases);
+              }
+              setActiveTab('batch');
+            }}
+            onLogout={handleLogout}
+            onSessionExpired={() => {
+              logoutUser();
+              setSession(null);
             }}
           />
         )}
@@ -288,10 +305,17 @@ export default function App() {
                   )}
 
                   {activeTab === 'batch' && (
-                    <BatchEvaluatorView onLoadKitToWorkspace={(k) => {
-                      setActiveKit(k);
-                      setActiveTab('overview');
-                    }} />
+                    <BatchEvaluatorView
+                      initialCases={batchCases}
+                      onLoadKitToWorkspace={(k) => {
+                        setActiveKit(k);
+                        if (session) {
+                          const kitId = `kit_${Date.now()}`;
+                          saveUserKit(session.userId, kitId, k);
+                        }
+                        setActiveTab('overview');
+                      }}
+                    />
                   )}
                 </div>
               </div>
