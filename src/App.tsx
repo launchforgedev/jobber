@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { TopNav, ActiveTab } from './components/TopNav.tsx';
+import { AuthScreen } from './components/AuthScreen.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
+import { DashboardAnalytics } from './components/DashboardAnalytics.tsx';
+import { ResumeMatcher } from './components/ResumeMatcher.tsx';
 import { KitCreator } from './components/KitCreator.tsx';
 import { CompanyRoleHeader } from './components/CompanyRoleHeader.tsx';
 import { QuestionBank } from './components/QuestionBank.tsx';
@@ -12,16 +15,18 @@ import { PrintableOnePager } from './components/PrintableOnePager.tsx';
 import { PrepKit, UserSession } from './types/prepkit.ts';
 import { getActiveSession, logoutUser, getUserKits, saveUserKit } from './services/authStorage.ts';
 import { useThemeState } from './services/theme.ts';
-import { Printer, Sparkles, BookOpen, Calendar, HelpCircle, Award, Terminal, ArrowRight } from 'lucide-react';
+import { Printer, HelpCircle, Calendar, BookOpen, Award, ArrowRight } from 'lucide-react';
 import { BrandLogo } from './components/BrandLogo.tsx';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [session, setSession] = useState<UserSession | null>(null);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activeKit, setActiveKit] = useState<PrepKit | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
+  const [preseededJd, setPreseededJd] = useState<string | undefined>(undefined);
+  const [preseededCompanyUrl, setPreseededCompanyUrl] = useState<string | undefined>(undefined);
   const { theme, toggleTheme } = useThemeState();
 
   // Initialize session and restore user kits
@@ -36,14 +41,12 @@ export default function App() {
     }
   }, []);
 
-  const handleSessionChange = (newSession: UserSession) => {
+  const handleAuthenticated = (newSession: UserSession) => {
     setSession(newSession);
+    setActiveTab('dashboard');
     const userKits = getUserKits(newSession.userId);
     if (userKits.length > 0) {
       setActiveKit(userKits[0].kit);
-    } else if (activeKit) {
-      const kitId = `kit_${Date.now()}`;
-      saveUserKit(newSession.userId, kitId, activeKit);
     }
   };
 
@@ -71,9 +74,22 @@ export default function App() {
     }
   };
 
+  const handleLaunchPrepKitFromMatcher = (jd: string, companyUrl: string) => {
+    setPreseededJd(jd);
+    setPreseededCompanyUrl(companyUrl);
+    setIsCreatingNew(true);
+    setActiveTab('overview');
+    setShowPrintView(false);
+  };
+
+  // Step 1: When user is not authenticated, show enterprise AuthScreen
+  if (!session) {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
-      {/* Top Bar Contract (3 zones + Dark Mode toggle + Mobile Drawer) */}
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
+      {/* Top Bar Navigation */}
       <TopNav
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -82,10 +98,13 @@ export default function App() {
           setShowPrintView(false);
         }}
         session={session}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         onNewKit={() => {
           setIsCreatingNew(true);
+          setPreseededJd(undefined);
+          setPreseededCompanyUrl(undefined);
+          setActiveTab('overview');
           setShowPrintView(false);
         }}
         hasActiveKit={!!activeKit}
@@ -93,179 +112,208 @@ export default function App() {
         onToggleTheme={toggleTheme}
       />
 
-      {/* Main Viewport Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        {/* Auth Modal */}
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <AuthModal
-          isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
-          onSessionChange={handleSessionChange}
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSessionChange={handleAuthenticated}
         />
 
-        {showPrintView && activeKit ? (
-          <PrintableOnePager kit={activeKit} onBack={() => setShowPrintView(false)} />
-        ) : isCreatingNew || !activeKit ? (
-          <KitCreator
-            onKitCreated={handleKitCreated}
-            onBatchCasesLoaded={(_cases) => {
-              setActiveTab('batch');
-              setIsCreatingNew(false);
+        {/* STEP 2: Dashboard Analytics & Interactive Charts */}
+        {activeTab === 'dashboard' && (
+          <DashboardAnalytics
+            session={session}
+            onNavigateToMatcher={() => setActiveTab('matcher')}
+            onNavigateToGenerator={() => {
+              setIsCreatingNew(true);
+              setActiveTab('overview');
             }}
           />
-        ) : (
-          <div className="space-y-6">
-            {/* View Sub-header / Fast-action toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-white/[0.08]">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
-                <span className="text-slate-900 dark:text-white font-semibold">{activeKit.role.title}</span>
-                <span>/</span>
-                <span className="text-indigo-600 dark:text-indigo-400">{activeKit.source.company_url}</span>
-                <span>/</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{activeKit.schedule.days_available} Days</span>
-              </div>
+        )}
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowPrintView(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors shadow-xs interactive-hover"
-                >
-                  <Printer className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Executive One-Pager</span>
-                </button>
+        {/* STEP 3: Resume & Job Description Matcher Module */}
+        {activeTab === 'matcher' && (
+          <ResumeMatcher
+            onLaunchPrepKitWithJd={handleLaunchPrepKitFromMatcher}
+          />
+        )}
 
-                <button
-                  onClick={() => setIsCreatingNew(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors shadow-xs interactive-hover"
-                >
-                  <span>New Role</span>
-                </button>
-              </div>
-            </div>
+        {/* Assessment Kit & Tools Views */}
+        {activeTab !== 'dashboard' && activeTab !== 'matcher' && (
+          <>
+            {showPrintView && activeKit ? (
+              <PrintableOnePager kit={activeKit} onBack={() => setShowPrintView(false)} />
+            ) : isCreatingNew || !activeKit ? (
+              <KitCreator
+                initialJd={preseededJd}
+                initialCompanyUrl={preseededCompanyUrl}
+                onKitCreated={handleKitCreated}
+                onBatchCasesLoaded={(_cases) => {
+                  setActiveTab('batch');
+                  setIsCreatingNew(false);
+                }}
+              />
+            ) : (
+              <div className="space-y-6">
+                {/* Fast Action Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-zinc-800">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-500 dark:text-zinc-400">
+                    <span className="text-slate-900 dark:text-zinc-100 font-semibold">{activeKit.role.title}</span>
+                    <span>/</span>
+                    <span className="text-blue-600 dark:text-blue-400">{activeKit.source.company_url}</span>
+                    <span>/</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{activeKit.schedule.days_available} Days</span>
+                  </div>
 
-            {/* Tab Views with animated transition */}
-            <div className="transition-all duration-300 ease-in-out">
-              {activeTab === 'overview' && (
-                <div className="space-y-8 animate-fade-in">
-                  <CompanyRoleHeader kit={activeKit} onUpdateKit={handleUpdateKit} />
-
-                  {/* Prompverse-style Quick Navigation Bento Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div
-                      onClick={() => setActiveTab('questions')}
-                      className="group cursor-pointer rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0d111c] p-5 hover-glow transition-all duration-200 shadow-sm dark:shadow-none"
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowPrintView(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-2xs"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <HelpCircle className="h-5 w-5 text-emerald-500" />
-                        <span className="font-mono text-xs text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">
-                          View <ArrowRight className="h-3 w-3" />
-                        </span>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-                        {activeKit.questions.length}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Questions & Rubrics
-                      </div>
-                    </div>
+                      <Printer className="h-3.5 w-3.5 text-slate-400" />
+                      <span>Print One-Pager</span>
+                    </button>
 
-                    <div
-                      onClick={() => setActiveTab('schedule')}
-                      className="group cursor-pointer rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0d111c] p-5 hover-glow transition-all duration-200 shadow-sm dark:shadow-none"
+                    <button
+                      onClick={() => {
+                        setIsCreatingNew(true);
+                        setPreseededJd(undefined);
+                        setPreseededCompanyUrl(undefined);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-2xs"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <Calendar className="h-5 w-5 text-blue-500" />
-                        <span className="font-mono text-xs text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">
-                          View <ArrowRight className="h-3 w-3" />
-                        </span>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-                        {activeKit.schedule.days_available} Days
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Deterministic Daily Plan
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setActiveTab('practice')}
-                      className="group cursor-pointer rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0d111c] p-5 hover-glow transition-all duration-200 shadow-sm dark:shadow-none"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <BookOpen className="h-5 w-5 text-amber-500" />
-                        <span className="font-mono text-xs text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">
-                          View <ArrowRight className="h-3 w-3" />
-                        </span>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-                        {activeKit.flashcards.length} Cards
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Spaced-Repetition Deck
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setActiveTab('mock')}
-                      className="group cursor-pointer rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0d111c] p-5 hover-glow transition-all duration-200 shadow-sm dark:shadow-none"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <Award className="h-5 w-5 text-purple-500" />
-                        <span className="font-mono text-xs text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">
-                          View <ArrowRight className="h-3 w-3" />
-                        </span>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-                        AI Studio
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Voice/Text & Radar Audit
-                      </div>
-                    </div>
+                      <span>New Role</span>
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {activeTab === 'questions' && (
-                <QuestionBank kit={activeKit} onUpdateKit={handleUpdateKit} />
-              )}
+                {/* Sub Tab Views */}
+                <div>
+                  {activeTab === 'overview' && (
+                    <div className="space-y-8 animate-fade-in">
+                      <CompanyRoleHeader kit={activeKit} onUpdateKit={handleUpdateKit} />
 
-              {activeTab === 'schedule' && (
-                <ScheduleView kit={activeKit} onUpdateKit={handleUpdateKit} />
-              )}
+                      {/* Quick Navigation Cards */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div
+                          onClick={() => setActiveTab('questions')}
+                          className="cursor-pointer rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-blue-500 transition-colors shadow-xs"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <HelpCircle className="h-5 w-5 text-emerald-500" />
+                            <span className="font-mono text-xs text-slate-400 hover:text-blue-500 flex items-center gap-1">
+                              View <ArrowRight className="h-3 w-3" />
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">
+                            {activeKit.questions.length}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                            Questions & Rubrics
+                          </div>
+                        </div>
 
-              {activeTab === 'practice' && (
-                <PracticeFlashcards kit={activeKit} />
-              )}
+                        <div
+                          onClick={() => setActiveTab('schedule')}
+                          className="cursor-pointer rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-blue-500 transition-colors shadow-xs"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <Calendar className="h-5 w-5 text-blue-500" />
+                            <span className="font-mono text-xs text-slate-400 hover:text-blue-500 flex items-center gap-1">
+                              View <ArrowRight className="h-3 w-3" />
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">
+                            {activeKit.schedule.days_available} Days
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                            Deterministic Daily Plan
+                          </div>
+                        </div>
 
-              {activeTab === 'mock' && (
-                <MockInterviewStudio kit={activeKit} />
-              )}
+                        <div
+                          onClick={() => setActiveTab('practice')}
+                          className="cursor-pointer rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-blue-500 transition-colors shadow-xs"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <BookOpen className="h-5 w-5 text-amber-500" />
+                            <span className="font-mono text-xs text-slate-400 hover:text-blue-500 flex items-center gap-1">
+                              View <ArrowRight className="h-3 w-3" />
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">
+                            {activeKit.flashcards.length} Cards
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                            Spaced-Repetition Deck
+                          </div>
+                        </div>
 
-              {activeTab === 'batch' && (
-                <BatchEvaluatorView onLoadKitToWorkspace={(k) => {
-                  setActiveKit(k);
-                  setActiveTab('overview');
-                }} />
-              )}
-            </div>
-          </div>
+                        <div
+                          onClick={() => setActiveTab('mock')}
+                          className="cursor-pointer rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-blue-500 transition-colors shadow-xs"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <Award className="h-5 w-5 text-purple-500" />
+                            <span className="font-mono text-xs text-slate-400 hover:text-blue-500 flex items-center gap-1">
+                              View <ArrowRight className="h-3 w-3" />
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">
+                            AI Studio
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                            Voice/Text & Radar Audit
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'questions' && (
+                    <QuestionBank kit={activeKit} onUpdateKit={handleUpdateKit} />
+                  )}
+
+                  {activeTab === 'schedule' && (
+                    <ScheduleView kit={activeKit} onUpdateKit={handleUpdateKit} />
+                  )}
+
+                  {activeTab === 'practice' && (
+                    <PracticeFlashcards kit={activeKit} />
+                  )}
+
+                  {activeTab === 'mock' && (
+                    <MockInterviewStudio kit={activeKit} />
+                  )}
+
+                  {activeTab === 'batch' && (
+                    <BatchEvaluatorView onLoadKitToWorkspace={(k) => {
+                      setActiveKit(k);
+                      setActiveTab('overview');
+                    }} />
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      {/* Footer strictly adhering to professional design principles */}
-      <footer className="border-t border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#070a12] py-6 text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
+      {/* Clean SaaS Footer */}
+      <footer className="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-5 text-xs text-slate-500 dark:text-zinc-400 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <BrandLogo size={22} />
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Jobber AI</span>
+            <BrandLogo size={20} />
+            <span className="font-semibold text-slate-800 dark:text-zinc-200">Jobber</span>
             <span>·</span>
-            <span>Deterministic Interview Preparation Platform</span>
+            <span>Deterministic AI Interview Intelligence & Compatibility Platform</span>
           </div>
 
           <div className="flex items-center gap-4 text-[11px] font-mono">
-            <span>Deterministic Specification FS-AI-01</span>
+            <span>Appendix A & B Standard</span>
             <span>·</span>
-            <span>Batch CLI: <code className="text-slate-800 dark:text-slate-300">npm run evaluate</code></span>
+            <span>CLI Batch: <code className="text-slate-800 dark:text-zinc-300">npm run evaluate</code></span>
           </div>
         </div>
       </footer>

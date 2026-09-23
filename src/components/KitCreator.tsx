@@ -10,6 +10,8 @@ import { BrandLogo } from './BrandLogo.tsx';
 interface KitCreatorProps {
   onKitCreated: (kit: PrepKit) => void;
   onBatchCasesLoaded?: (cases: BatchInputCase[]) => void;
+  initialJd?: string;
+  initialCompanyUrl?: string;
 }
 
 const SAMPLE_PRESETS = [
@@ -81,9 +83,14 @@ Key Requirements:
   }
 ];
 
-export const KitCreator: React.FC<KitCreatorProps> = ({ onKitCreated, onBatchCasesLoaded }) => {
-  const [jd, setJd] = useState(SAMPLE_PRESETS[0].jd);
-  const [companyUrl, setCompanyUrl] = useState(SAMPLE_PRESETS[0].company);
+export const KitCreator: React.FC<KitCreatorProps> = ({
+  onKitCreated,
+  onBatchCasesLoaded,
+  initialJd,
+  initialCompanyUrl
+}) => {
+  const [jd, setJd] = useState(initialJd || SAMPLE_PRESETS[0].jd);
+  const [companyUrl, setCompanyUrl] = useState(initialCompanyUrl || SAMPLE_PRESETS[0].company);
   const [days, setDays] = useState(SAMPLE_PRESETS[0].days);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progressState, setProgressState] = useState<{ step: string; message: string; percentage: number } | null>(null);

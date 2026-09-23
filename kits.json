@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2026-09-23T16:29:58.043Z",
+  "generated_at": "2026-09-23T18:04:15.140Z",
   "kits": [
     {
       "id": "case-01",
@@ -12,7 +12,7 @@
           "role": "Senior Backend Engineer",
           "location": "Remote / Hybrid",
           "jd_chars": 550,
-          "researched_at": "2026-09-23T16:29:40.283Z",
+          "researched_at": "2026-09-23T18:04:06.487Z",
           "pages_used": [
             "https://stripe.com/",
             "https://stripe.com/en-sg/customers/jobber",
@@ -264,7 +264,7 @@
           "role": "Lead Frontend Architect",
           "location": "Remote / Hybrid",
           "jd_chars": 328,
-          "researched_at": "2026-09-23T16:29:42.671Z",
+          "researched_at": "2026-09-23T18:04:09.901Z",
           "pages_used": [
             "https://linear.app/",
             "https://linear.app/careers",
@@ -526,7 +526,7 @@
           "role": "Software Developer needed. Must know Python and Git.",
           "location": "Remote / Hybrid",
           "jd_chars": 52,
-          "researched_at": "2026-09-23T16:29:46.631Z",
+          "researched_at": "2026-09-23T18:04:13.582Z",
           "pages_used": [
             "https://example.com/"
           ]

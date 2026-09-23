@@ -2,72 +2,30 @@
 
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
-  /* Light mode defaults */
   html {
     color-scheme: light;
   }
 
-  /* Dark mode class override */
   html.dark {
     color-scheme: dark;
   }
 
   body {
     font-family: var(--font-sans);
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
     overflow-x: hidden;
   }
 }
 
-/* Prompverse AI Ambient Canvas & Glows */
-.prompverse-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.08) 35%, transparent 70%);
-}
-
-.prompverse-grid {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-}
-
-html:not(.dark) .prompverse-grid {
-  background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-}
-
-.glass-panel {
-  background: rgba(13, 17, 27, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-html:not(.dark) .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-/* Card hover glow */
-.hover-glow {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.hover-glow:hover {
-  border-color: rgba(99, 102, 241, 0.45);
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.2);
-  transform: translateY(-2px);
-}
-
-/* Subtle entrance animations */
+/* Crisp subtle animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -78,7 +36,7 @@ html:not(.dark) .glass-panel {
 @keyframes fadeInScale {
   from {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.99);
   }
   to {
     opacity: 1;
@@ -86,38 +44,12 @@ html:not(.dark) .glass-panel {
   }
 }
 
-@keyframes pulseSubtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
 .animate-fade-in {
-  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scale-in {
-  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-pulse-subtle {
-  animation: pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Button & interactive card micro-interactions */
-.interactive-hover {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.interactive-hover:hover {
-  transform: translateY(-1.5px);
-}
-
-.interactive-hover:active {
-  transform: translateY(0px) scale(0.98);
+  animation: fadeInScale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* 3D Flashcard flip styles */
@@ -138,51 +70,34 @@ html:not(.dark) .glass-panel {
   transform: rotateY(180deg);
 }
 
-/* Custom subtle scrollbar */
+/* Clean minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 html.dark ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #09090b;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+  background: #27272a;
+  border-radius: 2px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #3f3f46;
 }
 
 html:not(.dark) ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
 html:not(.dark) ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 html:not(.dark) ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
-}
-
-/* Responsive Media Queries for Fluid Mobile Adaptation */
-@media (max-width: 640px) {
-  .mobile-touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  .mobile-scroll-x {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .mobile-scroll-x::-webkit-scrollbar {
-    display: none;
-  }
 }
