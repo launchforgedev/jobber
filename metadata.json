@@ -1,0 +1,6 @@
+{
+  "name": "Jobber - AI Interview Prep Kit",
+  "description": "Jobber is a deterministic AI interview preparation intelligence platform with live web crawling, question coverage auditing, spaced repetition flashcards, and AI mock interviews.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

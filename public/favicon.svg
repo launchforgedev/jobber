@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Minimal Dark Squircle Base -->
+  <rect width="128" height="128" rx="32" fill="#090D16" />
+  <rect x="1" y="1" width="126" height="126" rx="31" stroke="#312E81" stroke-width="2" stroke-opacity="0.6" />
+  
+  <!-- Ambient glow radial -->
+  <circle cx="64" cy="64" r="38" fill="url(#brandGlow)" opacity="0.4" />
+  
+  <!-- Stylized Geometric "J" / Intelligence Nodes -->
+  <path d="M72 32 H88 V76 C88 92 74 102 56 102 C42 102 32 94 30 84 L46 80 C47 85 51 88 56 88 C64 88 72 82 72 74 V32 Z" fill="url(#jobberGradient)" />
+  <circle cx="48" cy="40" r="8" fill="#38BDF8" />
+  
+  <defs>
+    <radialGradient id="brandGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#090D16" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="jobberGradient" x1="30" y1="32" x2="88" y2="102" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="50%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+  </defs>
+</svg>

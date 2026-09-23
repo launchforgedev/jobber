@@ -1,0 +1,20 @@
+[
+  {
+    "id": "case-01",
+    "jd": "Senior Backend Engineer\n\nWe are looking for an experienced engineer to scale our distributed event-driven payment ledger.\n\nRequirements:\n- 5+ years of production experience with Node.js and TypeScript\n- Deep expertise in PostgreSQL, schema optimization, and ACID transactions\n- Hands-on experience with Kafka or RabbitMQ event streaming\n- Proven track record mentoring junior engineers and conducting code reviews\n\nBonus Points:\n- Experience with Kubernetes and Terraform infrastructure as code\n- Familiarity with PCI-DSS fintech compliance standards",
+    "company_url": "https://stripe.com",
+    "days": 5
+  },
+  {
+    "id": "case-02",
+    "jd": "Lead Frontend Architect\n\nMust have:\n- Mastery of React 19, TypeScript, and modern state machines\n- Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering\n- Strong cross-functional leadership partnering with product design\n\nNice to have:\n- Experience with WebGL or Three.js interactive data visualizations",
+    "company_url": "https://linear.app",
+    "days": 3
+  },
+  {
+    "id": "case-03-thin-stub",
+    "jd": "Software Developer needed. Must know Python and Git.",
+    "company_url": "https://example.com",
+    "days": 1
+  }
+]

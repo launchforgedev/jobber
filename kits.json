@@ -1,0 +1,637 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-23T16:29:58.043Z",
+  "kits": [
+    {
+      "id": "case-01",
+      "status": "ok",
+      "kit": {
+        "source": {
+          "company": "Senior Backend Engineer at Stripe | Financial Infrastructure to Grow Your Revenue",
+          "company_url": "https://stripe.com",
+          "role": "Senior Backend Engineer",
+          "location": "Remote / Hybrid",
+          "jd_chars": 550,
+          "researched_at": "2026-09-23T16:29:40.283Z",
+          "pages_used": [
+            "https://stripe.com/",
+            "https://stripe.com/en-sg/customers/jobber",
+            "https://stripe.com/en-sg/careers"
+          ]
+        },
+        "company_brief": {
+          "summary": "Stripe | Financial Infrastructure to Grow Your Revenue. Researched via domain crawl.",
+          "what_they_do": "Stripe | Financial Infrastructure to Grow Your Revenue\nGlobal GDP running on Stripe:\nFinancial infrastructure to grow your revenue. Accept payments, offer financial services and implement custom revenue models – from your first transaction to your bi",
+          "sources": [
+            "https://stripe.com/",
+            "https://stripe.com/en-sg/customers/jobber",
+            "https://stripe.com/en-sg/careers"
+          ]
+        },
+        "role": {
+          "title": "Senior Backend Engineer",
+          "seniority": "Senior",
+          "responsibilities": [
+            "Execute core engineering tasks defined for Senior Backend Engineer"
+          ],
+          "requirements": [
+            {
+              "id": "r1",
+              "text": "Deep expertise in PostgreSQL, schema optimization, and ACID transactions",
+              "kind": "technical",
+              "priority": "must"
+            },
+            {
+              "id": "r2",
+              "text": "Proven track record mentoring junior engineers and conducting code reviews",
+              "kind": "behavioural",
+              "priority": "must"
+            },
+            {
+              "id": "r3",
+              "text": "Familiarity with PCI-DSS fintech compliance standards",
+              "kind": "domain",
+              "priority": "must"
+            }
+          ]
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "technical",
+            "prompt": "Explain your practical experience with Deep expertise in PostgreSQL, schema optimization, and ACID transactions. Walk me through a challenging production issue you solved using this.",
+            "answer_outline": "Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q2",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "technical",
+            "prompt": "Explain your practical experience with Familiarity with PCI-DSS fintech compliance standards. Walk me through a challenging production issue you solved using this.",
+            "answer_outline": "Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q3",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "system-design",
+            "prompt": "How would you architect a resilient system that satisfies: \"Deep expertise in PostgreSQL, schema optimization, and ACID transactions\" while handling 100x traffic spikes?",
+            "answer_outline": "Candidate should discuss caching, horizontal scaling, data consistency, failure isolation, and bottleneck mitigation.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q4",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "system-design",
+            "prompt": "How would you architect a resilient system that satisfies: \"Familiarity with PCI-DSS fintech compliance standards\" while handling 100x traffic spikes?",
+            "answer_outline": "Candidate should discuss caching, horizontal scaling, data consistency, failure isolation, and bottleneck mitigation.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q5",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Deep expertise in PostgreSQL, schema optimization, and ACID transactions\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q6",
+            "requirement_ids": [
+              "r2"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Proven track record mentoring junior engineers and conducting code reviews\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q7",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Familiarity with PCI-DSS fintech compliance standards\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q8",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Deep expertise in PostgreSQL, schema optimization, and ACID transactions\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q9",
+            "requirement_ids": [
+              "r2"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Proven track record mentoring junior engineers and conducting code reviews\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q10",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Familiarity with PCI-DSS fintech compliance standards\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          }
+        ],
+        "flashcards": [
+          {
+            "id": "f1",
+            "front": "Core Requirement: Deep expertise in PostgreSQL, schema optimization, and ACID transactions\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Explain your practical experience with Deep expertise in PostgreSQL, schema optimization, and ACID transactions. Walk me through a challenging production issue you solved using this.\n\nOutline: Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "requirement_ids": [
+              "r1"
+            ],
+            "_state": "generated"
+          },
+          {
+            "id": "f2",
+            "front": "Core Requirement: Proven track record mentoring junior engineers and conducting code reviews\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Describe a situation where you had to champion \"Proven track record mentoring junior engineers and conducting code reviews\" amidst tight deadlines or conflicting team priorities.\n\nOutline: STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "requirement_ids": [
+              "r2"
+            ],
+            "_state": "generated"
+          },
+          {
+            "id": "f3",
+            "front": "Core Requirement: Familiarity with PCI-DSS fintech compliance standards\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Explain your practical experience with Familiarity with PCI-DSS fintech compliance standards. Walk me through a challenging production issue you solved using this.\n\nOutline: Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "requirement_ids": [
+              "r3"
+            ],
+            "_state": "generated"
+          }
+        ],
+        "schedule": {
+          "days_available": 5,
+          "days": [
+            {
+              "day": 1,
+              "focus": "System Design & Trade-Offs",
+              "question_ids": [
+                "q3",
+                "q4",
+                "q1"
+              ],
+              "minutes": 80
+            },
+            {
+              "day": 2,
+              "focus": "Leadership, STAR Stories & Culture Fit",
+              "question_ids": [
+                "q2",
+                "q5"
+              ],
+              "minutes": 40
+            },
+            {
+              "day": 3,
+              "focus": "Leadership, STAR Stories & Culture Fit",
+              "question_ids": [
+                "q6",
+                "q7",
+                "q8"
+              ],
+              "minutes": 60
+            },
+            {
+              "day": 4,
+              "focus": "Leadership, STAR Stories & Culture Fit",
+              "question_ids": [
+                "q9",
+                "q10"
+              ],
+              "minutes": 40
+            },
+            {
+              "day": 5,
+              "focus": "Final Simulation & Behavioural Alignment",
+              "question_ids": [
+                "q5"
+              ],
+              "minutes": 30
+            }
+          ]
+        },
+        "coverage": {
+          "uncovered_requirement_ids": [],
+          "passes": 1
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "case-02",
+      "status": "ok",
+      "kit": {
+        "source": {
+          "company": "Lead Frontend Architect at Linear – The system for product development",
+          "company_url": "https://linear.app",
+          "role": "Lead Frontend Architect",
+          "location": "Remote / Hybrid",
+          "jd_chars": 328,
+          "researched_at": "2026-09-23T16:29:42.671Z",
+          "pages_used": [
+            "https://linear.app/",
+            "https://linear.app/careers",
+            "https://linear.app/customers/ramp"
+          ]
+        },
+        "company_brief": {
+          "summary": "Linear – The system for product development. Researched via domain crawl.",
+          "what_they_do": "Linear – The system for product development\nSkip to content →\nThe product development system for teams and agents The product development system for teams and agents The product development system for teams and agents\nPurpose-built for planning and b",
+          "sources": [
+            "https://linear.app/",
+            "https://linear.app/careers",
+            "https://linear.app/customers/ramp"
+          ]
+        },
+        "role": {
+          "title": "Lead Frontend Architect",
+          "seniority": "Lead / Staff",
+          "responsibilities": [
+            "Lead Frontend Architect"
+          ],
+          "requirements": [
+            {
+              "id": "r1",
+              "text": "Mastery of React 19, TypeScript, and modern state machines",
+              "kind": "technical",
+              "priority": "must"
+            },
+            {
+              "id": "r2",
+              "text": "Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering",
+              "kind": "technical",
+              "priority": "must"
+            },
+            {
+              "id": "r3",
+              "text": "Strong cross-functional leadership partnering with product design",
+              "kind": "technical",
+              "priority": "must"
+            }
+          ]
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "technical",
+            "prompt": "Explain your practical experience with Mastery of React 19, TypeScript, and modern state machines. Walk me through a challenging production issue you solved using this.",
+            "answer_outline": "Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q2",
+            "requirement_ids": [
+              "r2"
+            ],
+            "category": "technical",
+            "prompt": "Explain your practical experience with Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering. Walk me through a challenging production issue you solved using this.",
+            "answer_outline": "Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q3",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "technical",
+            "prompt": "Explain your practical experience with Strong cross-functional leadership partnering with product design. Walk me through a challenging production issue you solved using this.",
+            "answer_outline": "Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q4",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "system-design",
+            "prompt": "How would you architect a resilient system that satisfies: \"Mastery of React 19, TypeScript, and modern state machines\" while handling 100x traffic spikes?",
+            "answer_outline": "Candidate should discuss caching, horizontal scaling, data consistency, failure isolation, and bottleneck mitigation.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q5",
+            "requirement_ids": [
+              "r2"
+            ],
+            "category": "system-design",
+            "prompt": "How would you architect a resilient system that satisfies: \"Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering\" while handling 100x traffic spikes?",
+            "answer_outline": "Candidate should discuss caching, horizontal scaling, data consistency, failure isolation, and bottleneck mitigation.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q6",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "system-design",
+            "prompt": "How would you architect a resilient system that satisfies: \"Strong cross-functional leadership partnering with product design\" while handling 100x traffic spikes?",
+            "answer_outline": "Candidate should discuss caching, horizontal scaling, data consistency, failure isolation, and bottleneck mitigation.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q7",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Mastery of React 19, TypeScript, and modern state machines\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q8",
+            "requirement_ids": [
+              "r2"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q9",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Strong cross-functional leadership partnering with product design\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q10",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Mastery of React 19, TypeScript, and modern state machines\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q11",
+            "requirement_ids": [
+              "r2"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q12",
+            "requirement_ids": [
+              "r3"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Strong cross-functional leadership partnering with product design\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          }
+        ],
+        "flashcards": [
+          {
+            "id": "f1",
+            "front": "Core Requirement: Mastery of React 19, TypeScript, and modern state machines\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Explain your practical experience with Mastery of React 19, TypeScript, and modern state machines. Walk me through a challenging production issue you solved using this.\n\nOutline: Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "requirement_ids": [
+              "r1"
+            ],
+            "_state": "generated"
+          },
+          {
+            "id": "f2",
+            "front": "Core Requirement: Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Explain your practical experience with Proven expertise in Web Performance, Core Web Vitals, and sub-second rendering. Walk me through a challenging production issue you solved using this.\n\nOutline: Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "requirement_ids": [
+              "r2"
+            ],
+            "_state": "generated"
+          },
+          {
+            "id": "f3",
+            "front": "Core Requirement: Strong cross-functional leadership partnering with product design\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Explain your practical experience with Strong cross-functional leadership partnering with product design. Walk me through a challenging production issue you solved using this.\n\nOutline: Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "requirement_ids": [
+              "r3"
+            ],
+            "_state": "generated"
+          }
+        ],
+        "schedule": {
+          "days_available": 3,
+          "days": [
+            {
+              "day": 1,
+              "focus": "System Design & Trade-Offs",
+              "question_ids": [
+                "q4",
+                "q5",
+                "q6",
+                "q1",
+                "q2",
+                "q3"
+              ],
+              "minutes": 150
+            },
+            {
+              "day": 2,
+              "focus": "Leadership, STAR Stories & Culture Fit",
+              "question_ids": [
+                "q7",
+                "q8",
+                "q9",
+                "q10",
+                "q11",
+                "q12"
+              ],
+              "minutes": 120
+            },
+            {
+              "day": 3,
+              "focus": "Final Simulation & Behavioural Alignment",
+              "question_ids": [
+                "q6"
+              ],
+              "minutes": 30
+            }
+          ]
+        },
+        "coverage": {
+          "uncovered_requirement_ids": [],
+          "passes": 1
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "case-03-thin-stub",
+      "status": "ok",
+      "kit": {
+        "source": {
+          "company": "Software Developer needed. Must know Python and Git. at Example Domain",
+          "company_url": "https://example.com",
+          "role": "Software Developer needed. Must know Python and Git.",
+          "location": "Remote / Hybrid",
+          "jd_chars": 52,
+          "researched_at": "2026-09-23T16:29:46.631Z",
+          "pages_used": [
+            "https://example.com/"
+          ]
+        },
+        "company_brief": {
+          "summary": "Example Domain. Researched via domain crawl.",
+          "what_they_do": "Example Domain Example Domain\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\nLearn more",
+          "sources": [
+            "https://example.com/"
+          ]
+        },
+        "role": {
+          "title": "Software Developer needed. Must know Python and Git.",
+          "seniority": "Mid-Level",
+          "responsibilities": [
+            "Software Developer needed. Must know Python and Git."
+          ],
+          "requirements": [
+            {
+              "id": "r1",
+              "text": "Software Developer needed. Must know Python and Git.",
+              "kind": "technical",
+              "priority": "must"
+            }
+          ]
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "technical",
+            "prompt": "Explain your practical experience with Software Developer needed. Must know Python and Git.. Walk me through a challenging production issue you solved using this.",
+            "answer_outline": "Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q2",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "system-design",
+            "prompt": "How would you architect a resilient system that satisfies: \"Software Developer needed. Must know Python and Git.\" while handling 100x traffic spikes?",
+            "answer_outline": "Candidate should discuss caching, horizontal scaling, data consistency, failure isolation, and bottleneck mitigation.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q3",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "behavioural",
+            "prompt": "Describe a situation where you had to champion \"Software Developer needed. Must know Python and Git.\" amidst tight deadlines or conflicting team priorities.",
+            "answer_outline": "STAR structure: Situation, Task, Actions taken to align colleagues, and Resulting business impact.",
+            "difficulty": 2,
+            "_state": "generated"
+          },
+          {
+            "id": "q4",
+            "requirement_ids": [
+              "r1"
+            ],
+            "category": "company-fit",
+            "prompt": "How does your approach to \"Software Developer needed. Must know Python and Git.\" align with this company's engineering values and mission?",
+            "answer_outline": "Candidate connects personal engineering philosophy with the company's stated focus and product scope.",
+            "difficulty": 2,
+            "_state": "generated"
+          }
+        ],
+        "flashcards": [
+          {
+            "id": "f1",
+            "front": "Core Requirement: Software Developer needed. Must know Python and Git.\nWhat key signals demonstrate mastery in this domain?",
+            "back": "Key focus: Explain your practical experience with Software Developer needed. Must know Python and Git.. Walk me through a challenging production issue you solved using this.\n\nOutline: Candidate should detail production context, architecture trade-offs, root cause analysis, and measurable outcome.",
+            "requirement_ids": [
+              "r1"
+            ],
+            "_state": "generated"
+          }
+        ],
+        "schedule": {
+          "days_available": 1,
+          "days": [
+            {
+              "day": 1,
+              "focus": "System Design & Trade-Offs",
+              "question_ids": [
+                "q2",
+                "q1",
+                "q3",
+                "q4"
+              ],
+              "minutes": 90
+            }
+          ]
+        },
+        "coverage": {
+          "uncovered_requirement_ids": [],
+          "passes": 1
+        }
+      },
+      "error": null
+    }
+  ]
+}
